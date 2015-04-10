@@ -15,6 +15,7 @@ function watchify (b, opts) {
     var delay = typeof opts.delay === 'number' ? opts.delay : 600;
     var changingDeps = {};
     var pending = false;
+    var idToFile = {};
     
     var wopts = {persistent: true};
     if (opts.ignoreWatch) {
@@ -35,7 +36,7 @@ function watchify (b, opts) {
     function collect () {
         b.pipeline.get('deps').push(through.obj(function(row, enc, next) {
             if (cache) {
-                cache[row.file] = {
+                cache[idToFile[row.expose ? row.file : row.id] || row.file] = {
                     id: row.file,
                     source: row.source,
                     deps: xtend({}, row.deps),
@@ -48,7 +49,8 @@ function watchify (b, opts) {
         }));
     }
     
-    b.on('file', function (file) {
+    b.on('file', function (file, id) {
+        idToFile[id] = file;
         watchFile(file);
     });
     
